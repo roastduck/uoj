@@ -30,11 +30,11 @@ $config = [
 	'web' => [
 		'main' => [
 			'protocol' => 'http',
-			'host' => 'local_uoj.ac'
+			'host' => '127.0.0.1'
 		],
 		'blog' => [
 			'protocol' => 'http',
-			'host' => 'blog.local_uoj.ac'
+			'host' => '127.0.0.1'
 		]
 	],
 	'security' => [
