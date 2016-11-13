@@ -2,13 +2,16 @@
 	requirePHPLib('form');
 	requirePHPLib('judger');
 	requirePHPLib('svn');
-	
+
+	$cur_tab = isset($_GET['tab']) ? ('tab::' . DB::escape($_GET['tab'])) : 'tab::textbook';
+
 	if (isSuperUser($myUser)) {
 		$new_problem_form = new UOJForm('new_problem');
-		$new_problem_form->handle = function() {
+		$new_problem_form->handle = function() use ($cur_tab) {
 			mysql_query("insert into problems (title, is_hidden, submission_requirement) values ('New Problem', 1, '{}')");
 			$id = mysql_insert_id();
 			mysql_query("insert into problems_contents (id, statement, statement_md) values ($id, '', '')");
+			mysql_query("insert into problems_tags (problem_id, tag) values($id, '$cur_tab')");
 			svnNewProblem($id);
 		};
 		$new_problem_form->submit_button_config['align'] = 'right';
@@ -32,6 +35,7 @@
 			echo '<td class="text-left">', '<a href="/problem/', $problem['id'], '">', $problem['title'], '</a>';
 			if (isset($_COOKIE['show_tags_mode'])) {
 				foreach (queryProblemTags($problem['id']) as $tag) {
+					if (substr($tag, 0, 5) == 'tab::') continue;
 					echo '<a class="uoj-problem-tag">', '<span class="badge">', HTML::escape($tag), '</span>', '</a>';
 				}
 			}
@@ -55,17 +59,13 @@ EOD;
 	
 	$cond = array();
 	
-	$search_tag = null;
-	
-	$cur_tab = isset($_GET['tab']) ? $_GET['tab'] : 'all';
-	if ($cur_tab == 'template') {
-		$search_tag = "模板题";
-	}
+	$search_tag = $cur_tab;
 	if (isset($_GET['tag'])) {
 		$search_tag = $_GET['tag'];
+		$cur_tab = '';
 	}
 	if ($search_tag) {
-		$cond[] = "'".DB::escape($search_tag)."' in (select tag from problems_tags where problems_tags.problem_id = problems.id)";
+		$cond[] = "'".$search_tag."' in (select tag from problems_tags where problems_tags.problem_id = problems.id)";
 	}
 	
 	if ($cond) {
@@ -86,13 +86,17 @@ EOD;
 	$header .= '</tr>';
 	
 	$tabs_info = array(
-		'all' => array(
-			'name' => UOJLocale::get('problems::all problems'),
-			'url' => "/problems"
+		'tab::textbook' => array(
+			'name' => UOJLocale::get('problems::textbook problems'),
+			'url' => "/problems/textbook"
 		),
-		'template' => array(
-			'name' => UOJLocale::get('problems::template problems'),
-			'url' => "/problems/template"
+		'tab::contest' => array(
+			'name' => UOJLocale::get('problems::contest problems'),
+			'url' => "/problems/contest"
+		),
+		'tab::free' => array(
+			'name' => UOJLocale::get('problems::free problems'),
+			'url' => "/problems/free"
 		)
 	);
 	
@@ -174,7 +178,7 @@ $('#input-show_submit_mode').click(function() {
 	echo '</table>';
 	echo '</div>';
 	
-	if (isSuperUser($myUser)) {
+	if (isSuperUser($myUser) && $cur_tab != '') {
 		$new_problem_form->printHTML();
 	}
 	

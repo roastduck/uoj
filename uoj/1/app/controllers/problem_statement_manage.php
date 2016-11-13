@@ -9,7 +9,9 @@
 	}
 	
 	$problem_content = queryProblemContent($problem['id']);
-	$problem_tags = queryProblemTags($problem['id']);
+	$problem_all_tags = queryProblemTags($problem['id']);
+	$problem_tabs = array_filter($problem_all_tags, function($item) { return strpos($item, '::') !== FALSE; });
+	$problem_tags = array_filter($problem_all_tags, function($item) { return strpos($item, '::') === FALSE; });
 	
 	$problem_editor = new UOJBlogEditor();
 	$problem_editor->name = 'problem';
@@ -27,13 +29,14 @@
 	));
 	
 	$problem_editor->save = function($data) {
-		global $problem, $problem_tags;
+		global $problem, $problem_all_tags, $problem_tabs;
 		DB::update("update problems set title = '".DB::escape($data['title'])."' where id = {$problem['id']}");
 		DB::update("update problems_contents set statement = '".DB::escape($data['content'])."', statement_md = '".DB::escape($data['content_md'])."' where id = {$problem['id']}");
-		
-		if ($data['tags'] !== $problem_tags) {
+
+		$data_tags = array_merge($problem_tabs, $data['tags']);
+		if ($data_tags !== $problem_all_tags) {
 			DB::delete("delete from problems_tags where problem_id = {$problem['id']}");
-			foreach ($data['tags'] as $tag) {
+			foreach ($data_tags as $tag) {
 				DB::insert("insert into problems_tags (problem_id, tag) values ({$problem['id']}, '".DB::escape($tag)."')");
 			}
 		}

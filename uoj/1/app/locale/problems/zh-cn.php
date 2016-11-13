@@ -1,8 +1,11 @@
 <?php
 return [
 	'problem' => '题目',
-	'all problems' => '总题库',
+	'all problems' => '所有题目一览',
 	'template problems' => '模板题库',
+	'textbook problems' => '教材中练习题',
+	'contest problems' => '系列比赛试题',
+	'free problems' => '自由练习题',
 	'add new' => '添加新题',
 	'ac' => 'AC',
 	'submit' => '提交',
